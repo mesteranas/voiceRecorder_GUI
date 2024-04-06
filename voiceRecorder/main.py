@@ -1,7 +1,7 @@
 import sys
 from custome_errors import *
 sys.excepthook = my_excepthook
-from PyQt6.QtMultimedia import QMediaCaptureSession,QMediaRecorder,QAudioInput
+from PyQt6.QtMultimedia import QMediaCaptureSession,QMediaRecorder,QAudioInput,QMediaFormat
 import update
 import gui
 import guiTools
@@ -20,7 +20,10 @@ class main (qt.QMainWindow):
         self.session.setAudioInput(self.input)
         self.recorder=QMediaRecorder()
         self.session.setRecorder(self.recorder)
-        self.recorder.setOutputLocation(qt2.QUrl.fromLocalFile("d:/test"))
+        self.format=QMediaFormat()
+        self.format.setAudioCodec(self.format.AudioCodec.MP3)
+        self.format.setFileFormat(self.format.FileFormat.MP3)
+        self.recorder.setMediaFormat(self.format)
         self.record=qt.QPushButton(_("record"))
         self.record.setDefault(True)
         self.record.clicked.connect(self.on_record)
@@ -44,6 +47,10 @@ class main (qt.QMainWindow):
         self.setCentralWidget(w)
 
         mb=self.menuBar()
+        self.path=None
+        select=qt1.QAction(_("select folder"),self)
+        mb.addAction(select)
+        select.triggered.connect(self.on_select)
         help=mb.addMenu(_("help"))
         helpFile=qt1.QAction(_("help file"),self)
         help.addAction(helpFile)
@@ -92,6 +99,7 @@ class main (qt.QMainWindow):
         else:
             self.close()
     def on_record(self):
+        self.recorder.setOutputLocation(qt2.QUrl.fromLocalFile(self.path))
         self.recorder.record()
         self.record.setDisabled(True)
         self.stop.setDisabled(False)
@@ -105,6 +113,12 @@ class main (qt.QMainWindow):
         self.recorder.pause()
         self.pause.setDisabled(True)
         self.record.setDisabled(False)
+    def on_select(self):
+        file=qt.QFileDialog(self)
+        file.setFileMode(file.FileMode.Directory)
+        if file.exec()==file.DialogCode.Accepted:
+            self.path=file.selectedFiles()[0]
+
 App=qt.QApplication([])
 w=main()
 w.show()
